@@ -1,23 +1,29 @@
 const { app, BrowserWindow, nativeImage } = require('electron');
 const path = require('path');
 
-function createWindow() {
+async function createWindow() {
+  const isDev = await import('electron-is-dev').then(module => module.default);
+
   const win = new BrowserWindow({
     width: 800,
     height: 600,
-    icon: path.join(__dirname, 'legoat.jpeg'), // Set the window icon on macOS
+    icon: path.join(__dirname, 'public', 'legoat.jpeg'),
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   });
 
-  win.loadFile('index.html');
+  const url = isDev
+    ? 'http://localhost:3000'
+    : `file://${path.join(__dirname, 'legoatapp', 'build', 'index.html')}`;
+
+  win.loadURL(url);
 
   const thumbnailImage = nativeImage.createFromPath(path.join(__dirname, 'legoat.jpeg'));
   if (!thumbnailImage.isEmpty()) {
-    console.log('Image dimensions:', thumbnailImage.getSize());
     if (process.platform === 'darwin') {
-      app.dock.setIcon(thumbnailImage); // Set the dock icon on macOS
+      app.dock.setIcon(thumbnailImage);
     } else if (process.platform === 'win32') {
       win.setOverlayIcon(thumbnailImage, 'My Electron App');
     } else {
